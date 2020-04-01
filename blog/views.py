@@ -57,8 +57,7 @@ def index(request):
     most_fresh_posts = list(fresh_posts)[-5:]
     most_fresh_posts = fetch_comments_amount(most_fresh_posts)
 
-    popular_tags = Tag.objects.order_by('-title')
-    most_popular_tags = popular_tags[0:5]
+    most_popular_tags = Tag.objects.popular()[0:5]
     context = {
         'most_popular_posts': [serialize_post_optimized_for_slider(post) for post in most_popular_posts],
         'page_posts': [serialize_post(post) for post in most_fresh_posts],
@@ -69,7 +68,7 @@ def index(request):
 
 def post_detail(request, slug):
     post = Post.objects.get(slug=slug)
-    comments = Comment.objects.filter(post=post)
+    comments = Comment.objects.filter(post=post).prefetch_related('author')
     serialized_comments = []
     for comment in comments:
         serialized_comments.append({
@@ -94,15 +93,14 @@ def post_detail(request, slug):
         "tags": [serialize_tag(tag) for tag in related_tags],
     }
 
-    popular_tags = Tag.objects.order_by('-title')
-    most_popular_tags = popular_tags[0:5]
+    most_popular_tags = Tag.objects.popular()[0:5]
 
     most_popular_posts = Post.objects.annotate(num_likes=Count('likes')).order_by('-num_likes')[:5]
 
     context = {
         'post': serialized_post,
         'popular_tags': [serialize_tag(tag) for tag in most_popular_tags],
-        'most_popular_posts': [serialize_post(post) for post in most_popular_posts],
+        'most_popular_posts': [serialize_post_optimized_for_slider(post) for post in most_popular_posts],
     }
     return render(request, 'post-details.html', context)
 
@@ -110,18 +108,18 @@ def post_detail(request, slug):
 def tag_filter(request, tag_title):
     tag = Tag.objects.get(title=tag_title)
 
-    popular_tags = Tag.objects.order_by('-title')
-    most_popular_tags = popular_tags[0:5]
+    most_popular_tags = Tag.objects.popular()[0:5]
 
     most_popular_posts = Post.objects.annotate(num_likes=Count('likes')).order_by('-num_likes')[:5]
 
     related_posts = tag.posts.all()[:20]
+    related_posts = fetch_comments_amount(related_posts)
 
     context = {
         "tag": tag.title,
         'popular_tags': [serialize_tag(tag) for tag in most_popular_tags],
         "posts": [serialize_post(post) for post in related_posts],
-        'most_popular_posts': [serialize_post(post) for post in most_popular_posts],
+        'most_popular_posts': [serialize_post_optimized_for_slider(post) for post in most_popular_posts],
     }
     return render(request, 'posts-list.html', context)
 

@@ -3,6 +3,19 @@ from django.urls import reverse
 from django.contrib.auth.models import User
 
 
+class TagQuerySet(models.QuerySet):
+
+    def popular(self):
+        return self.order_by('-title')
+
+
+class PostQuerySet(models.QuerySet):
+
+    def year(self, year):
+        post_at_year = self.filter(published_at__year=year).order_by('published_at')
+        return post_at_year
+
+
 class Post(models.Model):
     title = models.CharField("Заголовок", max_length=200)
     text = models.TextField("Текст")
@@ -13,6 +26,8 @@ class Post(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Автор", limit_choices_to={'is_staff': True})
     likes = models.ManyToManyField(User, related_name="liked_posts", verbose_name="Кто лайкнул", blank=True)
     tags = models.ManyToManyField("Tag", related_name="posts", verbose_name="Теги")
+
+    objects = PostQuerySet.as_manager()
 
     def __str__(self):
         return self.title
@@ -28,6 +43,7 @@ class Post(models.Model):
 
 class Tag(models.Model):
     title = models.CharField("Тег", max_length=20, unique=True)
+    objects = TagQuerySet.as_manager()
 
     def __str__(self):
         return self.title
@@ -62,3 +78,10 @@ class Comment(models.Model):
         ordering = ['published_at']
         verbose_name = 'комментарий'
         verbose_name_plural = 'комментарии'
+
+
+class PostQuerySet(models.QuerySet):
+
+    def year(self, year):
+        post_at_year = self.filter(published_at__year=year).order_by('published_at')
+        return post_at_year
