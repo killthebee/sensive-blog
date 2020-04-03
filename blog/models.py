@@ -50,7 +50,7 @@ class Post(models.Model):
     published_at = models.DateTimeField("Дата и время публикации")
 
     author = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Автор", limit_choices_to={'is_staff': True})
-    likes = models.ManyToManyField(User, related_name="liked_posts", verbose_name="Кто лайкнул", blank=True)
+    likes = models.ManyToManyField(User, related_name="liked_posts", verbose_name="Кто лайкнул", blank=True, db_index=True)
     tags = models.ManyToManyField("Tag", related_name="posts", verbose_name="Теги")
 
     objects = PostQuerySet.as_manager()
@@ -91,8 +91,9 @@ class Comment(models.Model):
                              on_delete=models.CASCADE,
                              verbose_name="Пост, к которому написан",
                              related_name='comments',
+                             db_index=True,
                              )
-    author = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Автор")
+    author = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Автор", db_index=True)
 
     text = models.TextField("Текст комментария")
     published_at = models.DateTimeField("Дата и время публикации")
