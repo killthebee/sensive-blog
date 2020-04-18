@@ -7,7 +7,7 @@ from django.db.models import Count
 class TagQuerySet(models.QuerySet):
 
     def popular(self):
-        return self.annotate(Count('posts')).order_by('-posts__count')[0:5]
+        return self.annotate(Count('posts')).order_by('-posts__count')
     #быстрее работает если без префетча хз
 
     def fetch_with_posts_count(self):
@@ -25,11 +25,11 @@ class TagQuerySet(models.QuerySet):
 class PostQuerySet(models.QuerySet):
 
     def year(self, year):
-        post_at_year = self.filter(published_at__year=year).order_by('published_at')
-        return post_at_year
+        posts_at_year = self.filter(published_at__year=year).order_by('published_at')
+        return posts_at_year
 
-    def popular(self):
-        return self.prefetch_related('author').prefetch_related('tags').annotate(Count('likes')).order_by('-likes__count')[:5]
+    def popular_with_author_and_tags(self):
+        return self.prefetch_related('author').prefetch_related('tags').annotate(Count('likes')).order_by('-likes__count')
 
     def fetch_with_comments_count(self):
         posts = self
@@ -105,10 +105,3 @@ class Comment(models.Model):
         ordering = ['published_at']
         verbose_name = 'комментарий'
         verbose_name_plural = 'комментарии'
-
-
-class PostQuerySet(models.QuerySet):
-
-    def year(self, year):
-        post_at_year = self.filter(published_at__year=year).order_by('published_at')
-        return post_at_year
